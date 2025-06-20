@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Auth Server - Đăng nhập</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    :root {
+      --primary: #1e88e5;
+      --danger: #e53935;
+      --success: #43a047;
+      --gray: #888;
+      --bg-light: #f5f7fa;
+      --card-bg: #ffffff;
+      --input-bg: #f0f2f5;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background: var(--bg-light);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .login-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      padding: 40px 30px;
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h2 {
+      color: var(--primary);
+      margin-bottom: 30px;
+      font-weight: 600;
+    }
+
+    .input-group {
+      display: flex;
+      align-items: center;
+      background: var(--input-bg);
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin: 12px 0;
+      transition: border-color 0.3s ease;
+    }
+
+    .input-group:focus-within {
+      border-color: var(--primary);
+    }
+
+    .input-group i {
+      color: #888;
+      margin-right: 10px;
+      font-size: 16px;
+    }
+
+    .input-group input {
+      border: none;
+      background: transparent;
+      outline: none;
+      width: 100%;
+      font-size: 15px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 18px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #1565c0;
+    }
+
+    #msg {
+      margin-top: 16px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    @media screen and (max-width: 500px) {
+      .login-card {
+        padding: 30px 20px;
+      }
+      .input-group input, button {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="login-card">
+  <h2>Đăng nhập hệ thống</h2>
+  <div class="input-group">
+    <i class="fas fa-user"></i>
+    <input id="username" placeholder="Tên đăng nhập" value="user1">
+  </div>
+  <div class="input-group">
+    <i class="fas fa-lock"></i>
+    <input id="password" type="password" placeholder="Mật khẩu" value="password1">
+  </div>
+  <button onclick="login()">Đăng nhập</button>
+  <p id="msg"></p>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const redirectUri = params.get('redirect_uri') || 'http://localhost:8081';
+  const tokenKey = 'sso_token';
+  const msgBox = document.getElementById('msg');
+  let isSubmitting = false;
+
+  // Nếu có token trong localStorage → xác minh luôn
+  const storedToken = localStorage.getItem(tokenKey);
+  if (storedToken) verifyAndRedirect(storedToken);
+
+  // Nếu bị logout broadcast
+  if (params.get('broadcast') === 'true') {
+    localStorage.removeItem(tokenKey);
+    window.opener?.postMessage("logout_all", "*");
+    window.parent?.postMessage("logout_all", "*");
+    setTimeout(() => window.location.href = redirectUri, 500);
+  }
+
+  function login() {
+    if (isSubmitting) return;
+    isSubmitting = true;
+    setMessage("🔄 Đang xử lý...", "#888");
+
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    fetch(`http://localhost:8080/api/login?redirect_uri=${encodeURIComponent(redirectUri)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.token) {
+        setMessage("✅ Đăng nhập thành công! Đang chuyển hướng...", "green");
+        localStorage.setItem(tokenKey, data.token);
+        setTimeout(() => {
+          window.location.href = `${data.redirect_uri}?token=${encodeURIComponent(data.token)}`;
+        }, 1000);
+      } else {
+        setMessage(data.error || "❌ Đăng nhập thất bại.", "red");
+        isSubmitting = false;
+      }
+    })
+    .catch(() => {
+      setMessage("❌ Lỗi kết nối đến máy chủ", "red");
+      isSubmitting = false;
+    });
+  }
+
+  window.addEventListener("focus", () => {
+    const token = localStorage.getItem(tokenKey);
+    if (token) verifyAndRedirect(token);
+  });
+
+  function verifyAndRedirect(token) {
+    fetch('http://localhost:8080/api/verify-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.valid) {
+        window.location.href = `${redirectUri}?token=${encodeURIComponent(token)}`;
+      } else {
+        localStorage.removeItem(tokenKey);
+      }
+    })
+    .catch(() => {
+      localStorage.removeItem(tokenKey);
+    });
+  }
+
+  function setMessage(text, color = 'black') {
+    if (msgBox) {
+      msgBox.textContent = text;
+      msgBox.style.color = color;
+      msgBox.style.display = 'block';
+    }
+  }
+</script>
+</body>
+</html>
