@@ -165,12 +165,10 @@ public class AuthController {
         log.info("refreshToken {}", CommonUtil.beanToString(request));
         String refreshToken = request.get("refreshToken");
         Map<String, String> response = new HashMap<>();
-
         if (refreshToken == null || refreshToken.isEmpty()) {
             response.put("error", "Missing refresh token");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
-
         // Tìm session theo refreshToken
         UserSession session = null;
         for (UserSession us : tokens.values()) {
@@ -179,24 +177,20 @@ public class AuthController {
                 break;
             }
         }
-
         if (session == null) {
             response.put("error", "Invalid refresh token");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
-
         // Kiểm tra refreshToken hợp lệ
         if (!TokenService.verifyRefreshToken(refreshToken, session.username, session.refreshTokenTimestamp)) {
             response.put("error", "Refresh token expired or invalid");
             tokens.values().removeIf(us -> us.refreshToken.equals(refreshToken));
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
-
         // Sinh access token mới
         long timestamp = System.currentTimeMillis();
         String newToken = TokenService.createToken(session.username);
         tokens.put(newToken, new UserSession(session.username, timestamp, refreshToken, session.refreshTokenTimestamp));
-
         response.put("token", newToken);
         response.put("username", session.username);
         log.info("refreshToken {}", CommonUtil.beanToString(response));

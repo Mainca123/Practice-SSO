@@ -132,41 +132,42 @@
       const messageEl = document.getElementById("message");
       const errorEl = document.getElementById("error");
 
+      // Lấy token từ URL nếu có (khi Auth Server redirect về)
       const urlParams = new URLSearchParams(window.location.search);
-      console.log("urlParams:", urlParams);
       const tokenFromUrl = urlParams.get("token");
       const refreshTokenFromUrl = urlParams.get("refreshToken");
-      console.log("tokenFromUrl:", tokenFromUrl);
-      console.log("refreshTokenFromUrl:", refreshTokenFromUrl);
 
+      // Lưu refreshToken nếu có trong URL
       if (refreshTokenFromUrl) {
         localStorage.setItem("sso_refresh_token", refreshTokenFromUrl);
       }
+
+      // Nếu có token trong URL thì lưu vào localStorage rồi xóa khỏi URL
       if (tokenFromUrl) {
         localStorage.setItem("sso_token", tokenFromUrl);
         localStorage.setItem("sso_refresh_token", refreshTokenFromUrl);
-        window.history.replaceState(
-          {},
-          document.title,
-          window.location.pathname
-        );
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
 
+      // Lấy token từ localStorage
       const token = localStorage.getItem("sso_token");
+
+      // Nếu chưa có token → chuyển hướng đến Auth Server
       if (!token) {
         redirectToLogin();
       } else {
+        // Nếu có thì xác minh token
         verifyToken().then((valid) => {
           if (!valid) redirectToLogin();
         });
       }
 
+      // Hàm chuyển hướng người dùng đến Auth Server (kèm redirect_uri)
       function redirectToLogin() {
-        location.href = `http://localhost:8080?redirect_uri=${encodeURIComponent(
-          location.origin
-        )}`;
+        location.href = `http://localhost:8080?redirect_uri=${encodeURIComponent(location.origin)}`;
       }
 
+      // Hàm xác minh token (gửi về Auth Server để xác minh)
       async function verifyToken() {
         try {
           const res = await fetch("http://localhost:8080/api/verify-token", {
@@ -178,39 +179,35 @@
           if (!res.ok) throw new Error("Token verification failed");
 
           const data = await res.json();
-          console.log("Token verification response:", data);
+
+          // Nếu token hợp lệ → trả về true
           if (data.valid) {
             return true;
           }
-          // Nếu token không hợp lệ, thử refresh bằng refresh token
+
+          // Nếu không hợp lệ → thử refresh bằng refreshToken
           const refreshToken = localStorage.getItem("sso_refresh_token");
           if (refreshToken) {
-            const refreshRes = await fetch(
-              "http://localhost:8080/api/refresh-token",
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ refreshToken }),
-              }
-            );
-            console.log("Refresh token response:", refreshRes);
-            // Nếu refresh thành công, lưu token mới
+            const refreshRes = await fetch("http://localhost:8080/api/refresh-token", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ refreshToken }),
+            });
+
             if (refreshRes.ok) {
               const refreshData = await refreshRes.json();
               if (refreshData.token) {
+                // Lưu lại token mới và refreshToken mới nếu có
                 localStorage.setItem("sso_token", refreshData.token);
-                // Nếu có refreshToken mới thì cập nhật luôn
                 if (refreshData.refreshToken) {
-                  localStorage.setItem(
-                    "sso_refresh_token",
-                    refreshData.refreshToken
-                  );
+                  localStorage.setItem("sso_refresh_token", refreshData.refreshToken);
                 }
                 return true;
               }
             }
           }
-          // Nếu không refresh được thì xóa token
+
+          // Nếu không refresh được thì xóa hết token và trả về false
           localStorage.removeItem("sso_token");
           localStorage.removeItem("sso_refresh_token");
           return false;
@@ -221,6 +218,7 @@
         }
       }
 
+      // Hàm gọi API /protected của App2 sau khi đã xác minh token
       async function accessProtected() {
         const token = localStorage.getItem("sso_token");
         if (!token) {
@@ -229,15 +227,12 @@
         }
 
         try {
-          // Gọi Auth Server để xác minh token
-          const verifyRes = await fetch(
-            "http://localhost:8080/api/verify-token",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ token }),
-            }
-          );
+          // Gửi token đến Auth Server để xác minh lại
+          const verifyRes = await fetch("http://localhost:8080/api/verify-token", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token }),
+          });
 
           const verifyData = await verifyRes.json();
           if (!verifyData.valid) {
@@ -246,12 +241,14 @@
             return;
           }
 
-          // Nếu token hợp lệ thì gọi App2 để lấy dữ liệu bảo vệ
+          // Nếu token hợp lệ thì gọi API protected của App2
           const protectedRes = await fetch("http://localhost:8082/protected", {
             headers: { Authorization: token },
           });
 
           const protectedData = await protectedRes.json();
+
+          // Hiển thị thông điệp tương ứng
           if (protectedData.message) {
             showMessage(protectedData.message, true);
           } else {
@@ -265,6 +262,7 @@
         }
       }
 
+      // Hàm đăng xuất người dùng khỏi App2 và Auth Server
       function logout() {
         const token = localStorage.getItem("sso_token");
         if (!token) return redirectToLogin();
@@ -275,11 +273,10 @@
         }).finally(() => {
           localStorage.removeItem("sso_token");
           localStorage.removeItem("sso_refresh_token");
-          // Gửi iframe yêu cầu Auth Server logout toàn bộ app
+
+          // Gửi iframe đến Auth Server để phát tín hiệu logout toàn bộ hệ thống
           const iframe = document.createElement("iframe");
-          iframe.src = `http://localhost:8080/logout?broadcast=true&redirect_uri=${encodeURIComponent(
-            location.origin
-          )}`;
+          iframe.src = `http://localhost:8080/logout?broadcast=true&redirect_uri=${encodeURIComponent(location.origin)}`;
           iframe.style.display = "none";
           document.body.appendChild(iframe);
 
@@ -289,6 +286,7 @@
         });
       }
 
+      // Hàm hiển thị thông điệp ra màn hình
       function showMessage(text, isSuccess) {
         if (isSuccess) {
           messageEl.textContent = text;
@@ -301,6 +299,7 @@
         }
       }
 
+      // Nhận thông điệp logout từ Auth Server (qua iframe)
       window.addEventListener("message", (event) => {
         if (
           event.origin === "http://localhost:8080" &&
@@ -312,6 +311,7 @@
         }
       });
 
+      // Khi người dùng quay lại tab → reload lại trang để kiểm tra lại token
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "visible") {
           location.reload();
