@@ -131,6 +131,7 @@
   const params = new URLSearchParams(window.location.search);
   const redirectUri = params.get('redirect_uri') || 'http://localhost:8081';
   const tokenKey = 'sso_token';
+  const refreshToken = 'sso_refresh_token';
   const msgBox = document.getElementById('msg');
   let isSubmitting = false;
 
@@ -160,18 +161,20 @@
       body: JSON.stringify({ username, password })
     })
     .then(res => res.json())
-    .then(data => {
-      if (data.token) {
-        setMessage("✅ Đăng nhập thành công! Đang chuyển hướng...", "green");
-        localStorage.setItem(tokenKey, data.token);
-        setTimeout(() => {
-          window.location.href = `${data.redirect_uri}?token=${encodeURIComponent(data.token)}`;
-        }, 1000);
-      } else {
-        setMessage(data.error || "❌ Đăng nhập thất bại.", "red");
-        isSubmitting = false;
-      }
-    })
+      .then(data => {
+        console.log('Login response:', data);
+        if (data.token) {
+          setMessage("✅ Đăng nhập thành công! Đang chuyển hướng...", "green");
+          localStorage.setItem(tokenKey, data.token);
+          localStorage.setItem(refreshToken, data.refreshToken);
+          setTimeout(() => {
+            window.location.href = `${data.redirect_uri}?token=${encodeURIComponent(data.token)}&refreshToken=${encodeURIComponent(data.refreshToken)}`;
+          }, 1000);
+        } else {
+          setMessage(data.error || "❌ Đăng nhập thất bại.", "red");
+          isSubmitting = false;
+        }
+      })
     .catch(() => {
       setMessage("❌ Lỗi kết nối đến máy chủ", "red");
       isSubmitting = false;

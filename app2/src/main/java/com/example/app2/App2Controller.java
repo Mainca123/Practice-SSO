@@ -1,5 +1,6 @@
 package com.example.app2;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +11,7 @@ import java.util.Map;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:8082") // Cho phép frontend của App2
+@Slf4j
 public class App2Controller {
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -28,9 +30,9 @@ public class App2Controller {
             // Gửi token đến Auth Server để xác minh
             Map<String, String> request = new HashMap<>();
             request.put("token", authorization);
-
+            log.info("request {}",CommonUtil.beanToString(request));
             ResponseEntity<Map> verifyResponse = restTemplate.postForEntity(
-                    "http://auth-server:8080/api/verify-token", request, Map.class);
+                    "http://localhost:8080/api/verify-token", request, Map.class);
 
             if (verifyResponse.getStatusCode() != HttpStatus.OK || verifyResponse.getBody() == null) {
                 result.put("error", "Invalid response from Auth Server");
@@ -71,7 +73,7 @@ public class App2Controller {
             request.put("token", authorization);
 
             // Gửi yêu cầu logout tới Auth Server
-            restTemplate.postForEntity("http://auth-server:8080/api/logout", request, Map.class);
+            restTemplate.postForEntity("http://localhost:8080/api/logout", request, Map.class);
         } catch (Exception e) {
             // Không cần xử lý lỗi logout ở đây
         }

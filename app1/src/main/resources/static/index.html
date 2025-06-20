@@ -1,237 +1,292 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>App1 - SSO</title>
     <style>
-        :root {
-          --primary: #4e54c8;
-          --secondary: #8f94fb;
-          --danger: #ff4d4f;
-          --success: #4caf50;
-        }
+      :root {
+        --primary: #4e54c8;
+        --secondary: #8f94fb;
+        --danger: #ff4d4f;
+        --success: #4caf50;
+      }
 
-        body {
-          margin: 0;
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          background: linear-gradient(135deg, var(--primary), var(--secondary));
-          min-height: 100vh;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
 
+      .container {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        padding: 30px;
+        width: 90%;
+        max-width: 400px;
+        text-align: center;
+        animation: fadeIn 0.5s ease-in-out;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      h2 {
+        color: var(--primary);
+        margin-bottom: 20px;
+      }
+
+      button {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+      }
+
+      button:first-of-type {
+        background: var(--primary);
+      }
+
+      button:first-of-type:hover {
+        background: #3b41a1;
+      }
+
+      button:last-of-type {
+        background: var(--danger);
+      }
+
+      button:last-of-type:hover {
+        background: #cc0000;
+      }
+
+      .message-box {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 8px;
+        display: none;
+        font-size: 15px;
+        text-align: left;
+      }
+
+      .message-box.success {
+        background-color: #e8f5e9;
+        color: var(--success);
+        border-left: 5px solid var(--success);
+      }
+
+      .message-box.error {
+        background-color: #ffebee;
+        color: var(--danger);
+        border-left: 5px solid var(--danger);
+      }
+
+      @media screen and (max-width: 500px) {
         .container {
-          background: #fff;
-          border-radius: 16px;
-          box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-          padding: 30px;
-          width: 90%;
-          max-width: 400px;
-          text-align: center;
-          animation: fadeIn 0.5s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        h2 {
-          color: var(--primary);
-          margin-bottom: 20px;
+          padding: 20px;
         }
 
         button {
-          width: 100%;
-          padding: 12px;
-          margin: 10px 0;
-          border: none;
-          border-radius: 8px;
-          color: white;
-          font-size: 16px;
-          cursor: pointer;
-          transition: background 0.3s ease;
+          font-size: 14px;
+          padding: 10px;
         }
-
-        button:first-of-type {
-          background: var(--primary);
-        }
-
-        button:first-of-type:hover {
-          background: #3b41a1;
-        }
-
-        button:last-of-type {
-          background: var(--danger);
-        }
-
-        button:last-of-type:hover {
-          background: #cc0000;
-        }
-
-        .message-box {
-          margin-top: 20px;
-          padding: 15px;
-          border-radius: 8px;
-          display: none;
-          font-size: 15px;
-          text-align: left;
-        }
-
-        .message-box.success {
-          background-color: #e8f5e9;
-          color: var(--success);
-          border-left: 5px solid var(--success);
-        }
-
-        .message-box.error {
-          background-color: #ffebee;
-          color: var(--danger);
-          border-left: 5px solid var(--danger);
-        }
-
-        @media screen and (max-width: 500px) {
-          .container {
-            padding: 20px;
-          }
-
-          button {
-            font-size: 14px;
-            padding: 10px;
-          }
-        }
+      }
     </style>
-</head>
-<body>
-<div class="container">
-    <h2>GIAO DIỆN APP 1</h2>
-    <button onclick="accessProtected()">Kiểm tra thông tin</button>
-    <button onclick="logout()">Đăng xuất</button>
+  </head>
+  <body>
+    <div class="container">
+      <h2>GIAO DIỆN APP 1</h2>
+      <button onclick="accessProtected()">Kiểm tra thông tin</button>
+      <button onclick="logout()">Đăng xuất</button>
 
-    <div id="message" class="message-box success"></div>
-    <div id="error" class="message-box error"></div>
-</div>
+      <div id="message" class="message-box success"></div>
+      <div id="error" class="message-box error"></div>
+    </div>
 
-<script>
-    const messageEl = document.getElementById('message');
-    const errorEl = document.getElementById('error');
+    <script>
+      const messageEl = document.getElementById("message");
+      const errorEl = document.getElementById("error");
 
-    // Nhận token từ URL sau khi đăng nhập
-    const urlParams = new URLSearchParams(window.location.search);
-    const tokenFromUrl = urlParams.get('token');
-    if (tokenFromUrl) {
-      localStorage.setItem('sso_token', tokenFromUrl);
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
+      // Nhận token từ URL sau khi đăng nhập
+      const urlParams = new URLSearchParams(window.location.search);
+      console.log("urlParams:", urlParams);
+      const tokenFromUrl = urlParams.get("token");
+      const refreshTokenFromUrl = urlParams.get("refreshToken");
+      console.log("tokenFromUrl:", tokenFromUrl);
+      console.log("refreshTokenFromUrl:", refreshTokenFromUrl);
 
-    const token = localStorage.getItem('sso_token');
-    if (!token) {
-      redirectToLogin();
-    } else {
-      verifyToken().then(valid => {
-        if (!valid) redirectToLogin();
-      });
-    }
+      if (refreshTokenFromUrl) {
+        localStorage.setItem("sso_refresh_token", refreshTokenFromUrl);
+      }
+      if (tokenFromUrl) {
+        localStorage.setItem("sso_token", tokenFromUrl);
+        localStorage.setItem("sso_refresh_token", refreshTokenFromUrl);
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+      }
 
-    function redirectToLogin() {
-      const redirectUri = encodeURIComponent(location.origin);
-      window.location.href = `http://localhost:8080?redirect_uri=${redirectUri}`;
-    }
-
-    async function verifyToken() {
-      try {
-        const res = await fetch('http://localhost:8080/api/verify-token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: localStorage.getItem('sso_token') })
+      const token = localStorage.getItem("sso_token");
+      if (!token) {
+        redirectToLogin();
+      } else {
+        verifyToken().then((valid) => {
+          if (!valid) redirectToLogin();
         });
+      }
 
-        if (!res.ok) throw new Error("Token verification failed");
+      function redirectToLogin() {
+        const redirectUri = encodeURIComponent(location.origin);
+        window.location.href = `http://localhost:8080?redirect_uri=${redirectUri}`;
+      }
 
-        const data = await res.json();
-        if (!data.valid) {
-          localStorage.removeItem('sso_token');
+      async function verifyToken() {
+        try {
+          const res = await fetch("http://localhost:8080/api/verify-token", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: localStorage.getItem("sso_token") }),
+          });
+
+          if (!res.ok) throw new Error("Token verification failed");
+
+          const data = await res.json();
+          console.log("Token verification response:", data);
+          if (data.valid) {
+            return true;
+          }
+          // Nếu token không hợp lệ, thử refresh bằng refresh token
+          const refreshToken = localStorage.getItem("sso_refresh_token");
+          if (refreshToken) {
+            const refreshRes = await fetch(
+              "http://localhost:8080/api/refresh-token",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ refreshToken }),
+              }
+            );
+            console.log("Refresh token response:", refreshRes);
+            // Nếu refresh thành công, lưu token mới
+            if (refreshRes.ok) {
+              const refreshData = await refreshRes.json();
+              if (refreshData.token) {
+                localStorage.setItem("sso_token", refreshData.token);
+                // Nếu có refreshToken mới thì cập nhật luôn
+                if (refreshData.refreshToken) {
+                  localStorage.setItem(
+                    "sso_refresh_token",
+                    refreshData.refreshToken
+                  );
+                }
+                return true;
+              }
+            }
+          }
+          // Nếu không refresh được thì xóa token
+          localStorage.removeItem("sso_token");
+          localStorage.removeItem("sso_refresh_token");
+          return false;
+        } catch (err) {
+          localStorage.removeItem("sso_token");
           return false;
         }
-        return true;
-      } catch (err) {
-        localStorage.removeItem('sso_token');
-        return false;
       }
-    }
 
-    async function accessProtected() {
-      const valid = await verifyToken();
-      if (!valid) return redirectToLogin();
+      async function accessProtected() {
+        const valid = await verifyToken();
+        if (!valid) return redirectToLogin();
 
-      try {
-        const res = await fetch('http://localhost:8081/protected', {
-          headers: { 'Authorization': localStorage.getItem('sso_token') }
-        });
+        try {
+          const res = await fetch("http://localhost:8081/protected", {
+            headers: { Authorization: localStorage.getItem("sso_token") },
+          });
 
-        const data = await res.json();
+          const data = await res.json();
 
-        if (res.ok && data.message) {
-          showMessage(data.message, true);
-        } else {
-          showMessage(data.error || 'Truy cập bị từ chối', false);
-          localStorage.removeItem('sso_token');
+          if (res.ok && data.message) {
+            showMessage(data.message, true);
+          } else {
+            showMessage(data.error || "Truy cập bị từ chối", false);
+            localStorage.removeItem("sso_token");
+            setTimeout(redirectToLogin, 1000);
+          }
+        } catch (err) {
+          showMessage("Lỗi kết nối tới App1", false);
+          localStorage.removeItem("sso_token");
           setTimeout(redirectToLogin, 1000);
         }
-      } catch (err) {
-        showMessage('Lỗi kết nối tới App1', false);
-        localStorage.removeItem('sso_token');
-        setTimeout(redirectToLogin, 1000);
       }
-    }
 
-    function logout() {
-      fetch('http://localhost:8081/logout', {
-        method: 'POST',
-        headers: { 'Authorization': localStorage.getItem('sso_token') }
-      }).finally(() => {
-        localStorage.removeItem('sso_token');
+      function logout() {
+        fetch("http://localhost:8081/logout", {
+          method: "POST",
+          headers: { Authorization: localStorage.getItem("sso_token") },
+        }).finally(() => {
+          localStorage.removeItem("sso_token");
+          localStorage.removeItem("sso_refresh_token");
 
-        // Gọi Auth Server để thông báo logout toàn bộ
-        const iframe = document.createElement('iframe');
-        iframe.src = `http://localhost:8080/logout?broadcast=true&redirect_uri=${encodeURIComponent(location.origin)}`;
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
+          // Gọi Auth Server để thông báo logout toàn bộ
+          const iframe = document.createElement("iframe");
+          iframe.src = `http://localhost:8080/logout?broadcast=true&redirect_uri=${encodeURIComponent(
+            location.origin
+          )}`;
+          iframe.style.display = "none";
+          document.body.appendChild(iframe);
 
-        setTimeout(() => {
-          redirectToLogin();
-        }, 500);
+          setTimeout(() => {
+            redirectToLogin();
+          }, 500);
+        });
+      }
+
+      function showMessage(text, isSuccess) {
+        if (isSuccess) {
+          messageEl.style.display = "block";
+          errorEl.style.display = "none";
+          messageEl.textContent = text;
+        } else {
+          messageEl.style.display = "none";
+          errorEl.style.display = "block";
+          errorEl.textContent = text;
+        }
+      }
+
+      // Nhận thông báo từ Auth Server khi logout toàn bộ
+      window.addEventListener("message", (event) => {
+        if (
+          event.origin === "http://localhost:8080" &&
+          event.data === "logout_all"
+        ) {
+          localStorage.removeItem("sso_token");
+          location.reload();
+        }
       });
-    }
 
-    function showMessage(text, isSuccess) {
-      if (isSuccess) {
-        messageEl.style.display = 'block';
-        errorEl.style.display = 'none';
-        messageEl.textContent = text;
-      } else {
-        messageEl.style.display = 'none';
-        errorEl.style.display = 'block';
-        errorEl.textContent = text;
-      }
-    }
-
-    // Nhận thông báo từ Auth Server khi logout toàn bộ
-    window.addEventListener("message", (event) => {
-      if (event.origin === "http://localhost:8080" && event.data === "logout_all") {
-        localStorage.removeItem("sso_token");
-        location.reload();
-      }
-    });
-
-    document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") {
-    location.reload();
-  }
-});
-</script>
-
-</body>
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          location.reload();
+        }
+      });
+    </script>
+  </body>
 </html>
